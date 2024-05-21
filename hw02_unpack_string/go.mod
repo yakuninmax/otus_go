@@ -1,8 +1,11 @@
-module github.com/fixme_my_friend/hw02_unpack_string
+module github.com/yakuninmax/otus_go/hw02_unpack_string
 
 go 1.19
 
-require github.com/stretchr/testify v1.7.0
+require (
+	github.com/stretchr/testify v1.7.0
+	golang.org/x/example v0.0.0-20230725233554-29ffb748dd55
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
