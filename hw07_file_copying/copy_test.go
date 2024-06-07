@@ -1,14 +1,12 @@
 package main
 
 import (
-	"crypto/md5"
-	"io"
+	"bytes"
 	"log"
 	"os"
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,12 +16,13 @@ func TestCopy(t *testing.T) {
 
 	// Test case structure.
 	type testCase struct {
-		name          string
-		inputFile     string
-		referenceFile string
-		offset        int64
-		limit         int64
-		expectedError error
+		name            string
+		inputFile       string
+		destinationFile string
+		referenceFile   string
+		offset          int64
+		limit           int64
+		expectedError   error
 	}
 
 	// Tests list.
@@ -86,21 +85,46 @@ func TestCopy(t *testing.T) {
 			inputFile:     inputFile + "hhgjh",
 			expectedError: ErrFileNotFound,
 		},
+		{
+			name:          "invalid offset value",
+			inputFile:     inputFile + "hhgjh",
+			expectedError: ErrInvalidOffsetValue,
+			offset:        -5,
+		},
+		{
+			name:          "invalid limit value",
+			inputFile:     inputFile,
+			expectedError: ErrInvalidLimitValue,
+			limit:         -5,
+		},
+		{
+			name:            "same file",
+			inputFile:       path.Join("testdata", "samefile"),
+			destinationFile: path.Join("testdata", "samefile"),
+			expectedError:   ErrSameFile,
+		},
 	}
 
 	// Run tests.
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// Create temp file in temp dir.
-			tempFile, err := os.CreateTemp("", "ddtest*")
-			if err != nil {
-				log.Println(err)
+			var destinationFile string
+
+			if test.destinationFile != "" {
+				destinationFile = test.destinationFile
+			} else {
+				// Create temp file in temp dir.
+				tempFile, err := os.CreateTemp("", "ddtest*")
+				if err != nil {
+					log.Println(err)
+				}
+				destinationFile = tempFile.Name()
+				// Cleanup.
+				defer os.Remove(destinationFile)
 			}
-			// Cleanup.
-			defer os.Remove(tempFile.Name())
 
 			// Run copy function.
-			err = Copy(test.inputFile, tempFile.Name(), test.offset, test.limit)
+			err := Copy(test.inputFile, destinationFile, test.offset, test.limit)
 
 			// Check results.
 			if err != nil {
@@ -108,33 +132,30 @@ func TestCopy(t *testing.T) {
 				require.EqualError(t, err, test.expectedError.Error())
 			} else {
 				// Compare reference & temp copied file.
-				assert.Equal(t, md5checksum(t, test.referenceFile), md5checksum(t, tempFile.Name()))
+				_, err := compareFiles(t, inputFile, destinationFile)
+				require.Nil(t, err)
 			}
 		})
 	}
 }
 
-// Calculate MD5 checksum.
-func md5checksum(t *testing.T, filename string) []byte {
+// Compare files.
+func compareFiles(t *testing.T, sourceFileName, destinationFileName string) (bool, error) {
 	// Define as testing helper.
 	t.Helper()
 
-	// Open file.
-	file, err := os.Open(filename)
+	// Read source file.
+	sourceFile, err := os.ReadFile(sourceFileName)
 	if err != nil {
-		log.Println(err)
-	}
-	defer file.Close()
-
-	// Create md5 hash.
-	md5Hash := md5.New()
-
-	// Get file md5 hash.
-	_, err = io.Copy(md5Hash, file)
-	if err != nil {
-		log.Println(err)
+		return false, err
 	}
 
-	// Return md5 checksum.
-	return md5Hash.Sum(nil)
+	// Read destination file.
+	destinationFile, err := os.ReadFile(destinationFileName)
+	if err != nil {
+		return false, err
+	}
+
+	// Compare files.
+	return bytes.Equal(sourceFile, destinationFile), nil
 }

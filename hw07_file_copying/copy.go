@@ -12,19 +12,39 @@ import (
 var (
 	ErrUnsupportedFile         = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize   = errors.New("offset exceeds file size")
+	ErrInvalidOffsetValue      = errors.New("invalid offset value (must be >= 0)")
+	ErrInvalidLimitValue       = errors.New("invalid limit value (must be >= 0)")
 	ErrFileNotFound            = errors.New("source file not found")
 	ErrOpenSourceFile          = errors.New("could not open source file")
+	ErrSameFile                = errors.New("the source and target files are the same")
 	ErrGetOffset               = errors.New("could not get offset for source file")
 	ErrCreatingDestinationFile = errors.New("creating destination file failed")
 	ErrCopyFile                = errors.New("could not copy file")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
+	// Check offset & limit values.
+	if offset < 0 {
+		return ErrInvalidOffsetValue
+	}
+
+	if limit < 0 {
+		return ErrInvalidLimitValue
+	}
+
 	// Get file info and size.
 	sourceFileInfo, err := os.Stat(fromPath)
 	// Check if file exists.
 	if err != nil {
 		return ErrFileNotFound
+	}
+
+	// Checking that the source and target files are not the same.
+	destinationFileInfo, err := os.Stat(toPath)
+	if err != nil {
+		if os.SameFile(sourceFileInfo, destinationFileInfo) {
+			return ErrSameFile
+		}
 	}
 
 	// Check if regular file.
@@ -53,7 +73,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	// Set starting position using offset.
-	_, err = sourceFile.Seek(offset, 0)
+	_, err = sourceFile.Seek(offset, io.SeekStart)
 	if err != nil {
 		return ErrGetOffset
 	}

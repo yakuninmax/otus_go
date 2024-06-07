@@ -1,4 +1,4 @@
-module github.com/fixme_my_friend/hw07_file_copying
+module github.com/yakuninmax/otus_go/hw07_file_copying
 
 go 1.19
 
