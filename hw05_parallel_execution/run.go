@@ -2,6 +2,7 @@ package hw05parallelexecution
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -10,60 +11,67 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-// Worker
-func worker(jobsQueue <-chan Task, syncNum *int64, wg *sync.WaitGroup) {
-	// Update wait group
-	defer wg.Done()
+// Worker function.
+func worker(taskQueue <-chan Task, errorsCount *int64, waitGroup *sync.WaitGroup) error {
+	// Done wait group.
+	defer waitGroup.Done()
 
+	// Run tasks.
 	for {
-		if task, ok := <-jobsQueue; ok && atomic.LoadInt64(syncNum) >= 0 {
+		// Get task, and check errorsCount.
+		// Run task if errorsCount >= 0.
+		if task, ok := <-taskQueue; ok && atomic.LoadInt64(errorsCount) >= 0 {
+			// Check task result. If error, decrease errorsCounter.
 			if task() != nil {
-				atomic.AddInt64(syncNum, -1)
+				atomic.AddInt64(errorsCount, -1)
 			}
 		} else {
-			return
+			return ErrErrorsLimitExceeded
 		}
 	}
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-
-	// Create wait group
-	var wg = sync.WaitGroup{}
-
-	// Check n
+	// Check n & m values.
 	if n <= 0 {
-		return nil
+		return errors.New("n must be greater than 0")
 	}
 
-	// Check m
 	if m < 0 {
 		m = 0
 	}
 
-	// Create channels and workers
-	jobsQueue := make(chan Task, len(tasks))
+	// Create channel.
+	taskQueue := make(chan Task, len(tasks))
 
-	var syncNum int64 = int64(m)
+	// Create wait group.
+	waitGroup := sync.WaitGroup{}
 
-	// Start workers
+	// Set errors counter.
+	errorsCount := int64(m)
+
+	// Run n workers.
 	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go worker(jobsQueue, &syncNum, &wg)
+		waitGroup.Add(1)
+		go worker(taskQueue, &errorsCount, &waitGroup)
 	}
 
-	// Fill work queue
+	// Send tasks to channel.
 	for _, task := range tasks {
-		jobsQueue <- task
+		taskQueue <- task
 	}
-	close(jobsQueue)
+	close(taskQueue)
 
-	wg.Wait()
+	// Wait for jobs done.
+	waitGroup.Wait()
 
-	if atomic.LoadInt64(&syncNum) >= 0 {
-		return nil
+	// Check errorsCount.
+	if atomic.LoadInt64(&errorsCount) < 0 {
+		return ErrErrorsLimitExceeded
 	}
 
-	return ErrErrorsLimitExceeded
+	fmt.Println(errorsCount)
+
+	return nil
 }
