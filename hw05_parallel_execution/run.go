@@ -12,18 +12,13 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 type Task func() error
 
 // Worker function.
-func worker(taskQueue chan Task, errorsCount *int64, waitGroup *sync.WaitGroup) error {
-	// Done wait group.
-	defer waitGroup.Done()
-
+func worker(taskQueue chan Task, errorsCount *int64) error {
 	// Run tasks.
-	//	for {
 	// Get task, and check errorsCount.
 	// Run task if errorsCount >= 0.
 	for task := range taskQueue {
 		if task() != nil {
 			atomic.AddInt64(errorsCount, -1)
-
 			if atomic.LoadInt64(errorsCount) < 0 {
 				return ErrErrorsLimitExceeded
 			}
@@ -56,7 +51,10 @@ func Run(tasks []Task, n, m int) error {
 	// Run n workers.
 	for i := 0; i < n; i++ {
 		waitGroup.Add(1)
-		go worker(taskQueue, &errorsCount, &waitGroup)
+		go func() {
+			defer waitGroup.Done()
+			worker(taskQueue, &errorsCount)
+		}()
 	}
 
 	// Send tasks to channel.
