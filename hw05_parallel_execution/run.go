@@ -12,23 +12,25 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 type Task func() error
 
 // Worker function.
-func worker(taskQueue <-chan Task, errorsCount *int64, waitGroup *sync.WaitGroup) error {
+func worker(taskQueue chan Task, errorsCount *int64, waitGroup *sync.WaitGroup) error {
 	// Done wait group.
 	defer waitGroup.Done()
 
 	// Run tasks.
-	for {
-		// Get task, and check errorsCount.
-		// Run task if errorsCount >= 0.
-		if task, ok := <-taskQueue; ok && atomic.LoadInt64(errorsCount) >= 0 {
-			// Check task result. If error, decrease errorsCounter.
-			if task() != nil {
-				atomic.AddInt64(errorsCount, -1)
+	//	for {
+	// Get task, and check errorsCount.
+	// Run task if errorsCount >= 0.
+	for task := range taskQueue {
+		if task() != nil {
+			atomic.AddInt64(errorsCount, -1)
+
+			if atomic.LoadInt64(errorsCount) < 0 {
+				return ErrErrorsLimitExceeded
 			}
-		} else {
-			return ErrErrorsLimitExceeded
 		}
 	}
+
+	return nil
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
