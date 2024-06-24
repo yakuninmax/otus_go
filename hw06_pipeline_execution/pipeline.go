@@ -18,7 +18,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	return out
 }
 
-// Wrap channels
+// Wrap channels.
 func wrap(in In, done In) Out {
 	out := make(Bi)
 
