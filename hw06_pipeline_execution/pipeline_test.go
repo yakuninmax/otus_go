@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -89,5 +90,36 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	bytesStages := []Stage{
+		g("Bytes", func(v interface{}) interface{} { return v }),
+		g("Kilobytes", func(v interface{}) interface{} { return v.(int) / 1024 }),
+		g("Megabytes", func(v interface{}) interface{} { return v.(int) / 1024 }),
+		g("Stringifier", func(v interface{}) interface{} { return fmt.Sprintf("%d %s", v.(int), "megabytes") }),
+	}
+
+	t.Run("bytes case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{838860800, 524288000, 104857600}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		start := time.Now()
+		for s := range ExecutePipeline(in, nil, bytesStages...) {
+			result = append(result, s.(string))
+		}
+		elapsed := time.Since(start)
+
+		require.Equal(t, []string{"800 megabytes", "500 megabytes", "100 megabytes"}, result)
+		require.Less(t,
+			int64(elapsed),
+			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
 	})
 }
