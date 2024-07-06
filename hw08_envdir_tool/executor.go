@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,12 +9,36 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
-	// Create a command struct
-	command := exec.Command(cmd[0], cmd[1:]...)
+	// Get executable name.
+	executable := cmd[0]
 
-	// Set environment vars for command
-	for key, envVar := range env {
-		command.Env = append(os.Environ(), fmt.Printf("%s=%s", key, envVar.Value))
+	// Get args.
+	args := cmd[1:]
+
+	// Create a command struct.
+	command := exec.Command(executable, args...)
+	command.Env = os.Environ()
+	command.Stderr = os.Stderr
+	command.Stdin = os.Stdin
+	command.Stdout = os.Stdout
+
+	// Set environment vars for command.
+	for envKey, envVar := range env {
+		if envVar.NeedRemove {
+			command.Env = append(command.Env, fmt.Sprintf("%s=", envKey))
+		} else {
+			command.Env = append(command.Env, fmt.Sprintf("%s=%s", envKey, envVar.Value))
+		}
+	}
+
+	// Run command.
+	err := command.Run()
+	// Get exit code.
+	if err != nil {
+		exitError := &exec.ExitError{}
+		if errors.As(err, &exitError) {
+			return exitError.ExitCode()
+		}
 	}
 
 	return 0

@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"log"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +19,7 @@ type EnvValue struct {
 }
 
 // Errors.
-const errInvalidFileName = "file skipped. Invalid file name. Must not contain equal sign (=)."
+var errInvalidFileName = errors.New("invalid file name")
 
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
@@ -40,8 +40,7 @@ func ReadDir(dir string) (Environment, error) {
 
 		// Check file name for "=" symbol.
 		if strings.Contains(fileName, "=") {
-			log.Printf("%s %s", fileName, errInvalidFileName)
-			continue
+			return nil, errInvalidFileName
 		}
 
 		// Get file path.
