@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"path"
 	"testing"
@@ -23,7 +22,7 @@ func TestReadDir(t *testing.T) {
 
 	t.Run("Read envs from folder", func(t *testing.T) {
 		envVars, err := ReadDir(envDir)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, refMap, envVars)
 	})
 
@@ -31,12 +30,12 @@ func TestReadDir(t *testing.T) {
 		// Create file with equal sing in the name.
 		fileName := path.Join(envDir, "A=K")
 		_, err := os.Create(fileName)
-		if err != nil {
-			log.Println(err)
-		}
+
+		require.NoError(t, err)
+
 		defer os.Remove(fileName)
 
 		_, err = ReadDir(envDir)
-		require.EqualError(t, err, errInvalidFileName.Error())
+		require.ErrorIs(t, err, errInvalidFileName)
 	})
 }

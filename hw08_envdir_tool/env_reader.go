@@ -75,6 +75,10 @@ func ReadDir(dir string) (Environment, error) {
 
 			// Get first line.
 			fileScanner.Scan()
+			if err := fileScanner.Err(); err != nil {
+				return nil, err
+			}
+
 			firstLine := fileScanner.Text()
 
 			// Trim right.
