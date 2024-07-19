@@ -103,7 +103,6 @@ func TestValidate(t *testing.T) {
 		expextedErrors := &tt.expectedErr
 		structs := &tt.in
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			t.Parallel()
 			validationErrors := Validate(structs)
 			require.ErrorAs(t, validationErrors, expextedErrors)
 		})
