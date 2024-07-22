@@ -69,16 +69,14 @@ func Validate(v interface{}) error {
 
 		// Get rules.
 		rules := getRules(inputStructType.Field(i).Tag.Get(tagName))
-
 		// Validate field.
 		err := validateField(fieldValue, rules)
 		if err != nil {
-
 			if errors.Is(err, ErrInvalidRule) || errors.Is(err, ErrNotStruct) {
 				return err
-			} else {
-				validationErrors = append(validationErrors, ValidationError{Field: inputStructType.Field(i).Name, Err: err})
 			}
+
+			validationErrors = append(validationErrors, ValidationError{Field: inputStructType.Field(i).Name, Err: err})
 		}
 	}
 
