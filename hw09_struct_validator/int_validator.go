@@ -1,7 +1,6 @@
 package hw09structvalidator
 
 import (
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,7 +17,7 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 		// Get rule reference value.
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			log.Println("reference value is not int")
+			return ErrInvalidRule
 		}
 
 		if value < refValue {
@@ -30,7 +29,7 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 		// Get rule reference value.
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			log.Println("reference value is not int")
+			return ErrInvalidRule
 		}
 
 		if value > refValue {
@@ -46,19 +45,18 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 			// Get reference value.
 			refValue, err := strconv.Atoi(acceptableValue)
 			if err != nil {
-				log.Println("reference value is not int")
-				continue
+				return ErrInvalidRule
 			}
 
 			if value == refValue {
-				return nil
+				continue
 			}
 
 			return ErrNotIn
 		}
 
 	default:
-		log.Printf("unknown rule name %s", rule.name)
+		return ErrInvalidRule
 	}
 
 	return nil

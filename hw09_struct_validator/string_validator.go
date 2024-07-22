@@ -1,7 +1,6 @@
 package hw09structvalidator
 
 import (
-	"log"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -18,7 +17,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 	case "len":
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			log.Println("len value is not int")
+			return ErrInvalidRule
 		}
 
 		stringLength := len(value)
@@ -31,7 +30,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 	case "regexp":
 		match, err := regexp.MatchString(rule.refValue, value)
 		if err != nil {
-			log.Println("invalid regexp")
+			return ErrInvalidRule
 		}
 
 		if !match {
@@ -51,7 +50,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 		return ErrNotIn
 
 	default:
-		log.Printf("unknown rule name %s", rule.name)
+		return ErrInvalidRule
 	}
 
 	return nil

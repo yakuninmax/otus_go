@@ -14,13 +14,13 @@ const (
 )
 
 var (
-	ErrNotStruct     = errors.New("value is not a structure")
-	ErrMin           = errors.New("value is less than minimum")
-	ErrMax           = errors.New("value is greater than maximum")
-	ErrLength        = errors.New("invalid string length")
-	ErrRegexp        = errors.New("not match regexp")
-	ErrInvalidRegexp = errors.New("invalid regexp")
-	ErrNotIn         = errors.New("not in range")
+	ErrNotStruct   = errors.New("value is not a structure")
+	ErrMin         = errors.New("value is less than minimum")
+	ErrMax         = errors.New("value is greater than maximum")
+	ErrLength      = errors.New("invalid string length")
+	ErrRegexp      = errors.New("not match regexp")
+	ErrInvalidRule = errors.New("invalid rule definition")
+	ErrNotIn       = errors.New("not in range")
 )
 
 type ValidationError struct {
@@ -62,13 +62,23 @@ func Validate(v interface{}) error {
 		// Get field.
 		fieldValue := inputStruct.Field(i)
 
+		// Check for public field.
+		if !inputStructType.Field(i).IsExported() {
+			continue
+		}
+
 		// Get rules.
 		rules := getRules(inputStructType.Field(i).Tag.Get(tagName))
 
 		// Validate field.
 		err := validateField(fieldValue, rules)
 		if err != nil {
-			validationErrors = append(validationErrors, ValidationError{Field: inputStructType.Field(i).Name, Err: err})
+
+			if errors.Is(err, ErrInvalidRule) || errors.Is(err, ErrNotStruct) {
+				return err
+			} else {
+				validationErrors = append(validationErrors, ValidationError{Field: inputStructType.Field(i).Name, Err: err})
+			}
 		}
 	}
 
