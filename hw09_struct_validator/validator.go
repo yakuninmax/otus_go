@@ -14,13 +14,15 @@ const (
 )
 
 var (
-	ErrNotStruct   = errors.New("value is not a structure")
-	ErrMin         = errors.New("value is less than minimum")
-	ErrMax         = errors.New("value is greater than maximum")
-	ErrLength      = errors.New("invalid string length")
-	ErrRegexp      = errors.New("not match regexp")
-	ErrInvalidRule = errors.New("invalid rule definition")
-	ErrNotIn       = errors.New("not in range")
+	ErrNotStruct     = errors.New("value is not a structure")
+	ErrMin           = errors.New("value is less than minimum")
+	ErrMax           = errors.New("value is greater than maximum")
+	ErrLength        = errors.New("invalid string length")
+	ErrRegexp        = errors.New("not match regexp")
+	ErrInvalidRegexp = errors.New("invalid regexp definition")
+	ErrInvalidRef    = errors.New("invalid reference value")
+	ErrInvalidRule   = errors.New("invalid rule definition")
+	ErrNotIn         = errors.New("not in range")
 )
 
 type ValidationError struct {
@@ -46,11 +48,20 @@ func (v ValidationErrors) Error() string {
 	return str.String()
 }
 
+// Type for common errors.
+type CommonError struct {
+	CommonErr error
+}
+
+func (c CommonError) Error() string {
+	return c.CommonErr.Error()
+}
+
 func Validate(v interface{}) error {
 	// Check input struct.
 	inputStruct := reflect.ValueOf(v)
 	if inputStruct.Kind() != reflect.Struct {
-		return ErrNotStruct
+		return CommonError{CommonErr: ErrNotStruct}
 	}
 
 	// Create validation errors slice.
@@ -72,7 +83,7 @@ func Validate(v interface{}) error {
 		// Validate field.
 		err := validateField(fieldValue, rules)
 		if err != nil {
-			if errors.Is(err, ErrInvalidRule) || errors.Is(err, ErrNotStruct) {
+			if errors.As(err, &CommonError{}) {
 				return err
 			}
 

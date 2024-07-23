@@ -17,7 +17,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 	case "len":
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			return ErrInvalidRule
+			return CommonError{CommonErr: ErrInvalidRef}
 		}
 
 		stringLength := len(value)
@@ -30,7 +30,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 	case "regexp":
 		match, err := regexp.MatchString(rule.refValue, value)
 		if err != nil {
-			return ErrInvalidRule
+			return CommonError{CommonErr: ErrInvalidRegexp}
 		}
 
 		if !match {
@@ -50,7 +50,7 @@ func stringValidate(fieldValue reflect.Value, rule rule) error {
 		return ErrNotIn
 
 	default:
-		return ErrInvalidRule
+		return CommonError{CommonErr: ErrInvalidRule}
 	}
 
 	return nil

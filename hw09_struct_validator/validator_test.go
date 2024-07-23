@@ -26,6 +26,10 @@ type (
 		Version string `validate:"len:5"`
 	}
 
+	Fruit struct {
+		Color string `validate:"len:xx"`
+	}
+
 	Token struct {
 		Header    []byte
 		Payload   []byte
@@ -66,6 +70,13 @@ func TestValidate(t *testing.T) {
 				Version: "1.0.2387",
 			},
 			ErrLength,
+		},
+
+		{
+			Fruit{
+				Color: "Red",
+			},
+			ErrInvalidRef,
 		},
 
 		{
