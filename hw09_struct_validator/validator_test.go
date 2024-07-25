@@ -44,8 +44,8 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in            interface{}
+		expectedError error
 	}{
 		{
 			User{
@@ -55,7 +55,9 @@ func TestValidate(t *testing.T) {
 				Role:   "admin",
 				Phones: []string{"88005353535"},
 			},
-			ErrLength,
+			ValidationErrors{
+				{Field: "ID", Err: ErrLength},
+			},
 		},
 
 		{
@@ -69,14 +71,9 @@ func TestValidate(t *testing.T) {
 			App{
 				Version: "1.0.2387",
 			},
-			ErrLength,
-		},
-
-		{
-			Fruit{
-				Color: "Red",
+			ValidationErrors{
+				{Field: "Version", Err: ErrLength},
 			},
-			ErrInvalidRef,
 		},
 
 		{
@@ -101,21 +98,41 @@ func TestValidate(t *testing.T) {
 				Code: 503,
 				Body: "Server error",
 			},
-			ErrNotIn,
-		},
-
-		{
-			nil,
-			ErrNotStruct,
+			ValidationErrors{
+				{Field: "Code", Err: ErrNotIn},
+			},
 		},
 	}
 
 	for i, tt := range tests {
-		expextedErrors := &tt.expectedErr
-		structs := &tt.in
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			validationErrors := Validate(structs)
-			require.ErrorAs(t, validationErrors, expextedErrors)
+			err := Validate(tt.in)
+			require.Equal(t, tt.expectedError, err)
+		})
+	}
+}
+
+func TestCommonErrors(t *testing.T) {
+	tests := []struct {
+		in            interface{}
+		expectedError string
+	}{
+		{
+			Fruit{
+				Color: "red",
+			},
+			`strconv.Atoi: parsing "xx": invalid syntax`,
+		},
+		{
+			nil,
+			`value is not a structure`,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			err := Validate(tt.in)
+			require.Contains(t, err.Error(), tt.expectedError)
 		})
 	}
 }

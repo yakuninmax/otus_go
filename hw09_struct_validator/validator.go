@@ -14,15 +14,13 @@ const (
 )
 
 var (
-	ErrNotStruct     = errors.New("value is not a structure")
-	ErrMin           = errors.New("value is less than minimum")
-	ErrMax           = errors.New("value is greater than maximum")
-	ErrLength        = errors.New("invalid string length")
-	ErrRegexp        = errors.New("not match regexp")
-	ErrInvalidRegexp = errors.New("invalid regexp definition")
-	ErrInvalidRef    = errors.New("invalid reference value")
-	ErrInvalidRule   = errors.New("invalid rule definition")
-	ErrNotIn         = errors.New("not in range")
+	ErrNotStruct   = errors.New("value is not a structure")
+	ErrMin         = errors.New("value is less than minimum")
+	ErrMax         = errors.New("value is greater than maximum")
+	ErrLength      = errors.New("invalid string length")
+	ErrRegexp      = errors.New("not match regexp")
+	ErrInvalidRule = errors.New("invalid rule definition")
+	ErrNotIn       = errors.New("not in range")
 )
 
 type ValidationError struct {

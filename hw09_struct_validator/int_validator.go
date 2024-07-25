@@ -17,7 +17,7 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 		// Get rule reference value.
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			return CommonError{CommonErr: ErrInvalidRef}
+			return CommonError{CommonErr: err}
 		}
 
 		if value < refValue {
@@ -29,7 +29,7 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 		// Get rule reference value.
 		refValue, err := strconv.Atoi(rule.refValue)
 		if err != nil {
-			return CommonError{CommonErr: ErrInvalidRef}
+			return CommonError{CommonErr: err}
 		}
 
 		if value > refValue {
@@ -45,15 +45,15 @@ func intValidate(fieldValue reflect.Value, rule rule) error {
 			// Get reference value.
 			refValue, err := strconv.Atoi(acceptableValue)
 			if err != nil {
-				return CommonError{CommonErr: ErrInvalidRef}
+				return CommonError{CommonErr: err}
 			}
 
 			if value == refValue {
-				continue
+				return nil
 			}
-
-			return ErrNotIn
 		}
+
+		return ErrNotIn
 
 	default:
 		return CommonError{CommonErr: ErrInvalidRule}
