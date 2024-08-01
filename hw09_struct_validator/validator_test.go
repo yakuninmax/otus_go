@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -24,6 +26,10 @@ type (
 		Version string `validate:"len:5"`
 	}
 
+	Fruit struct {
+		Color string `validate:"len:xx"`
+	}
+
 	Token struct {
 		Header    []byte
 		Payload   []byte
@@ -38,23 +44,95 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in            interface{}
+		expectedError error
 	}{
 		{
-			// Place your code here.
+			User{
+				ID:     "00001",
+				Age:    41,
+				Email:  "user41@test.mail",
+				Role:   "admin",
+				Phones: []string{"88005353535"},
+			},
+			ValidationErrors{
+				{Field: "ID", Err: ErrLength},
+			},
 		},
-		// ...
-		// Place your code here.
+
+		{
+			App{
+				Version: "0.1.9",
+			},
+			nil,
+		},
+
+		{
+			App{
+				Version: "1.0.2387",
+			},
+			ValidationErrors{
+				{Field: "Version", Err: ErrLength},
+			},
+		},
+
+		{
+			Token{
+				[]byte{0, 0, 0, 0, 1},
+				[]byte{0, 0, 0, 0, 2},
+				[]byte{0, 0, 0, 0, 3},
+			},
+			nil,
+		},
+
+		{
+			Response{
+				Code: 200,
+				Body: "Ok",
+			},
+			nil,
+		},
+
+		{
+			Response{
+				Code: 503,
+				Body: "Server error",
+			},
+			ValidationErrors{
+				{Field: "Code", Err: ErrNotIn},
+			},
+		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
-			t.Parallel()
+			err := Validate(tt.in)
+			require.Equal(t, tt.expectedError, err)
+		})
+	}
+}
 
-			// Place your code here.
-			_ = tt
+func TestCommonErrors(t *testing.T) {
+	tests := []struct {
+		in            interface{}
+		expectedError string
+	}{
+		{
+			Fruit{
+				Color: "red",
+			},
+			`strconv.Atoi: parsing "xx": invalid syntax`,
+		},
+		{
+			nil,
+			`value is not a structure`,
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			err := Validate(tt.in)
+			require.Contains(t, err.Error(), tt.expectedError)
 		})
 	}
 }
