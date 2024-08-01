@@ -72,6 +72,6 @@ func TestTelnetClient(t *testing.T) {
 
 		client := NewTelnetClient("localhost:555", timeout, io.NopCloser(in), out)
 		err = client.Connect()
-		require.Error(t, err, "connection error")
+		require.Error(t, err)
 	})
 }

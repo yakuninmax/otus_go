@@ -45,6 +45,10 @@ func (c *Client) Connect() error {
 
 func (c *Client) Close() error {
 	// Close connection, and return error.
+	if c.connection == nil {
+		return nil
+	}
+
 	return c.connection.Close()
 }
 
