@@ -1,0 +1,35 @@
+# Log level.
+# Acceptable values: error, warn, info, debug.
+logLevel: debug
+
+# Storage parameters.
+storage:
+  # Storage type.
+  # Acceptable values: in-memory, postgresql.
+  type: postgresql
+  
+  # Storage connection parameters.
+  # Ignored, if storage type is in-memory.
+  connection:
+    # Database name.
+    database: calendar
+    
+    # User name.
+    user: calendar
+
+    # User password.
+    password: c@1end@r
+
+    # Database server host.
+    host: postgresql
+
+    # Database server port
+    port: 5432
+
+# HTTP server parameters.
+http:
+  # HTTP server host
+  host: localhost
+
+  # HTTP server port
+  port: 8080
