@@ -8,7 +8,7 @@ import (
 
 // Config struct.
 type Config struct {
-	LoggerConfig  `yaml:",inline"`
+	LoggerConfig  `yaml:"log"`
 	StorageConfig `yaml:"storage"`
 	HTTPConfig    `yaml:"http"`
 }
@@ -17,7 +17,9 @@ type Config struct {
 type LoggerConfig struct {
 	// Log level.
 	// Acceptable values: error, warn, info, debug.
-	Level string `yaml:"logLevel"`
+	Level         string `yaml:"level"`
+	Colors        bool   `yaml:"colors"`
+	FullTimestamp bool   `yaml:"fullTimestamp"`
 }
 
 // Storage parameters structure.
@@ -66,10 +68,10 @@ func NewConfig(configFile string) (Config, error) {
 	}
 	defer file.Close()
 
-	// Init new YAML decode
+	// New YAML decoder.
 	d := yaml.NewDecoder(file)
 
-	// Start YAML decoding from file
+	// YAML decoding from file.
 	if err := d.Decode(&config); err != nil {
 		return config, err
 	}

@@ -12,7 +12,9 @@ func TestConfig(t *testing.T) {
 	// Reference config structure.
 	referenceConfig := Config{
 		LoggerConfig: LoggerConfig{
-			Level: "debug",
+			Level:         "debug",
+			Colors:        true,
+			FullTimestamp: true,
 		},
 		StorageConfig: StorageConfig{
 			Type: "postgresql",

@@ -1,6 +1,14 @@
-# Log level.
-# Acceptable values: error, warn, info, debug.
-logLevel: debug
+# Log settings.
+log:
+  # Log level.
+  # Acceptable values: error, warn, info, debug.
+  level: debug
+
+  # Log colors.
+  colors: true
+
+  # Log fullTimestamp.
+  fullTimestamp: true
 
 # Storage parameters.
 storage:

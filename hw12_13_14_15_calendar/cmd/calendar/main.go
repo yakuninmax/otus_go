@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,19 +35,20 @@ func main() {
 
 	// Validate config file path.
 	if err := validateConfigPath(configFile); err != nil {
-		os.Stdout.WriteString("invalid config file path: " + err.Error())
-		os.Exit(1) //nolint:gocritic
+		log.Fatalf("invalid config file path: %s", err.Error())
 	}
 
 	// Read config file.
 	config, err := config.NewConfig(configFile)
 	if err != nil {
-		os.Stdout.WriteString("failed to read config file: " + err.Error())
-		os.Exit(1) //nolint:gocritic
+		log.Fatalf("failed to read config file: %s", err.Error())
 	}
 
 	// Create logger.
-	logg := logger.New(config.Logger.Level)
+	logg, err := logger.New(config.LoggerConfig.Level, config.LoggerConfig.Colors, config.LoggerConfig.FullTimestamp)
+	if err != nil {
+		log.Fatalf("failed to configure logger: %s", err.Error())
+	}
 
 	// Create storage.
 	storage := memorystorage.New()
