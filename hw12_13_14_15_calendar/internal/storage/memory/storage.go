@@ -19,13 +19,13 @@ type Storage struct {
 	mu     sync.RWMutex //nolint:unused
 }
 
+// Fake storage connection.
 func (s *Storage) Connect(_ context.Context, _ string) error {
 	return nil
 }
 
-func (s *Storage) Close(_ context.Context) error {
-	return nil
-}
+// Close fake connection.
+func (s *Storage) Close(_ context.Context) {}
 
 // Create event.
 func (s *Storage) Create(_ context.Context, event storage.Event) (int, error) {
@@ -146,6 +146,15 @@ func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event,
 	})
 
 	return result, nil
+}
+
+// Clean storage.
+func (s *Storage) Clean(_ context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.events = make(store)
+	return nil
 }
 
 // Get new event id.

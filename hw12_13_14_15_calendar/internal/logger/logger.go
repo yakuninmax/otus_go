@@ -7,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Errors.
 var ErrUnsupportedLoggingLevel = errors.New("unsupported logging level")
 
 // Logger structure.

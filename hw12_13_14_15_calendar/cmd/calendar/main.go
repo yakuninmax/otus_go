@@ -15,6 +15,7 @@ import (
 	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -45,23 +46,45 @@ func main() {
 	}
 
 	// Create logger.
-	logg, err := logger.New(config.LoggerConfig.Level, config.LoggerConfig.Colors, config.LoggerConfig.FullTimestamp)
+	logger, err := logger.New(config.LoggerConfig.Level, config.LoggerConfig.Colors, config.LoggerConfig.FullTimestamp)
 	if err != nil {
 		log.Fatalf("failed to configure logger: %s", err.Error())
 	}
 
-	// Create storage.
-	storage := memorystorage.New()
-
-	// Create calendar app.
-	calendar := app.New(logg, storage)
-
-	// Create HTTP server.
-	server := internalhttp.NewServer(logg, calendar)
-
+	// Create context.
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	// Create storage.
+	var storage app.Storage
+
+	switch config.Type {
+	case "in-memory":
+		storage = memorystorage.New()
+	case "sql":
+		storage = sqlstorage.New()
+		// Get connection string.
+		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			config.StorageConnection.Host,
+			config.StorageConnection.Port,
+			config.StorageConnection.User,
+			config.StorageConnection.Password,
+			config.StorageConnection.Database)
+
+		err := storage.Connect(ctx, connectionString)
+		if err != nil {
+			log.Fatalf("database connection failed: %s", err.Error())
+		}
+	default:
+		log.Fatalf("unsupported storage type: %s", config.Type)
+	}
+
+	// Create calendar app.
+	calendar := app.New(logger, storage)
+
+	// Create HTTP server.
+	server := internalhttp.NewServer(logger, calendar)
 
 	go func() {
 		<-ctx.Done()
@@ -70,14 +93,14 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logger.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logger.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		logger.Error("failed to start http server: " + err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

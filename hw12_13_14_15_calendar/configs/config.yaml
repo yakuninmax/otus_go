@@ -13,8 +13,8 @@ log:
 # Storage parameters.
 storage:
   # Storage type.
-  # Acceptable values: in-memory, postgresql.
-  type: postgresql
+  # Acceptable values: in-memory, sql.
+  type: in-memory
   
   # Storage connection parameters.
   # Ignored, if storage type is in-memory.
