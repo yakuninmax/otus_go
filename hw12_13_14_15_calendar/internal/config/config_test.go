@@ -22,7 +22,7 @@ func TestConfig(t *testing.T) {
 				Database: "calendar",
 				User:     "calendar",
 				Password: "c@1end@r",
-				Host:     "postgresql",
+				Host:     "in-memory",
 				Port:     5432,
 			},
 		},
