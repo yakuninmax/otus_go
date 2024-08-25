@@ -7,10 +7,12 @@ import (
 
 // Event structure.
 type Event struct {
-	ID     int
-	Title  string
-	Date   time.Time
-	UserID int
+	ID          int
+	Title       string
+	Date        time.Time
+	Duration    time.Duration
+	Description string
+	UserID      int
 }
 
 // Error definitions.

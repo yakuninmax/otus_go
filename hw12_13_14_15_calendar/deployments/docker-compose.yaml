@@ -1,1 +1,25 @@
-version: "3"
+version: "3.9"
+name: calendar
+
+services:
+  db:
+    image: postgres:16.4
+    container_name: calendar-db
+    env_file: .dev.env
+    ports:
+      - $POSTGRES_PORT
+
+  db-migrations:
+    image: calendar-migrations:$IMAGE_TAG
+    container_name: calendar-migrations
+    env_file: .dev.env
+    command: 
+      - -path
+      - /migrations
+      - -database
+      - postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$calendar-db:$POSTGRES_PORT/$POSTGRES_DATABASE?sslmode=disable
+      - verbose
+      - up
+    depends_on: 
+      - db
+

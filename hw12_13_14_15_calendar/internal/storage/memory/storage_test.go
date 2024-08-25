@@ -18,33 +18,42 @@ func TestStorage(t *testing.T) {
 	date4, _ := time.Parse(time.RFC3339, "2024-09-15T12:00:00+03:00")
 	events := []*storage.Event{
 		{
-			Title:  "Event 1",
-			Date:   date1,
-			UserID: userID,
+			Title:       "Event 1",
+			Date:        date1,
+			Duration:    time.Duration(time.Duration.Minutes(30)),
+			Description: "Test event 1",
+			UserID:      userID,
 		},
 		{
-			Title:  "Event 2",
-			Date:   date2,
-			UserID: userID,
+			Title:       "Event 2",
+			Date:        date2,
+			Duration:    time.Duration(time.Duration.Minutes(15)),
+			Description: "Test event 2",
+			UserID:      userID,
 		},
 		{
-			Title:  "Event 3",
-			Date:   date3,
-			UserID: userID,
+			Title:       "Event 3",
+			Duration:    time.Duration(time.Duration.Hours(2)),
+			Description: "Test event 3",
+			Date:        date3,
+			UserID:      userID,
 		},
 		{
-			Title:  "Event 4",
-			Date:   date4,
-			UserID: userID,
+			Title:       "Event 4",
+			Date:        date4,
+			Duration:    time.Duration(time.Duration.Hours(1)),
+			Description: "Test event 4",
+			UserID:      userID,
 		},
 	}
 
 	date5, _ := time.Parse(time.RFC3339, "2024-10-23T17:50:00+03:00")
 	update := storage.Event{
-		ID:     4,
-		Title:  "Updated event 4",
-		Date:   date5,
-		UserID: userID,
+		ID:       4,
+		Title:    "Updated event 4",
+		Date:     date5,
+		Duration: time.Duration(time.Duration.Minutes(45)),
+		UserID:   userID,
 	}
 
 	notFound := storage.ErrEventNotFound

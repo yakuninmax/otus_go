@@ -34,10 +34,12 @@ func (s *Storage) Create(_ context.Context, event storage.Event) (int, error) {
 
 	id := s.newID()
 	s.events[id] = storage.Event{
-		ID:     id,
-		Title:  event.Title,
-		Date:   event.Date,
-		UserID: event.UserID,
+		ID:          id,
+		Title:       event.Title,
+		Date:        event.Date,
+		Duration:    event.Duration,
+		Description: event.Description,
+		UserID:      event.UserID,
 	}
 	return id, nil
 }
@@ -56,6 +58,8 @@ func (s *Storage) Update(_ context.Context, id int, change storage.Event) error 
 	// Update event data.
 	event.Title = change.Title
 	event.Date = change.Date
+	event.Duration = change.Duration
+	event.Description = change.Description
 	s.events[id] = event
 
 	return nil
