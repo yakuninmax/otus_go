@@ -16,7 +16,7 @@ type store map[int]storage.Event
 type Storage struct {
 	count  int
 	events store
-	mu     sync.RWMutex //nolint:unused
+	mu     sync.RWMutex
 }
 
 // Fake storage connection.
