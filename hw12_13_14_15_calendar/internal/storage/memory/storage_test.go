@@ -94,5 +94,4 @@ func TestStorage(t *testing.T) {
 		err = storage.Delete(ctx, id)
 		require.Equal(t, notFound, err)
 	})
-
 }
