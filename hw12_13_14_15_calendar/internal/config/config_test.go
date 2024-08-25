@@ -17,12 +17,12 @@ func TestConfig(t *testing.T) {
 			FullTimestamp: true,
 		},
 		StorageConfig: StorageConfig{
-			Type: "postgresql",
+			Type: "in-memory",
 			StorageConnection: StorageConnection{
 				Database: "calendar",
 				User:     "calendar",
 				Password: "c@1end@r",
-				Host:     "in-memory",
+				Host:     "db",
 				Port:     5432,
 			},
 		},

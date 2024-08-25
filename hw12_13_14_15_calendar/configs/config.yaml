@@ -29,7 +29,7 @@ storage:
     password: c@1end@r
 
     # Database server host.
-    host: postgresql
+    host: db
 
     # Database server port
     port: 5432
