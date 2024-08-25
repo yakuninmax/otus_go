@@ -32,7 +32,7 @@ func (s *Storage) Create(_ context.Context, event storage.Event) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	id := s.newId()
+	id := s.newID()
 	s.events[id] = storage.Event{
 		ID:     id,
 		Title:  event.Title,
@@ -158,7 +158,7 @@ func (s *Storage) Clean(_ context.Context) error {
 }
 
 // Get new event id.
-func (s *Storage) newId() int {
+func (s *Storage) newID() int {
 	s.count++
 	return s.count
 }

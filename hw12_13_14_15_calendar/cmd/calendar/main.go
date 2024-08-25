@@ -74,10 +74,14 @@ func main() {
 
 		err := storage.Connect(ctx, connectionString)
 		if err != nil {
-			log.Fatalf("database connection failed: %s", err.Error())
+			logger.Error("database connection failed: " + err.Error())
+			cancel()
+			os.Exit(1) //nolint:gocritic
 		}
 	default:
-		log.Fatalf("unsupported storage type: %s", config.Type)
+		logger.Error("unsupported storage type: " + config.Type)
+		cancel()
+		os.Exit(1)
 	}
 
 	// Create calendar app.
@@ -102,7 +106,7 @@ func main() {
 	if err := server.Start(ctx); err != nil {
 		logger.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 }
 
