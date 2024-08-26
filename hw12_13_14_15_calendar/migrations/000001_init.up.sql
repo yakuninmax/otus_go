@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS events (
-    event_id serial PRIMARY KEY,
+    id serial PRIMARY KEY,
     title TEXT NOT NULL,
-    date timestamptz NOT NULL,
-    duration bigint NOT NULL,
+    start_date timestamptz NOT NULL,
+    end_date timestamptz NOT NULL,
     description TEXT,
     user_id int NOT NULL,
 );

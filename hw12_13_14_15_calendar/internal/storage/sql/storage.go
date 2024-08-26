@@ -31,17 +31,72 @@ func (s *Storage) Close(_ context.Context) {
 }
 
 // Create event.
-func (s *Storage) Create(_ context.Context, event storage.Event) (int, error) {
-	return 0, nil
+func (s *Storage) Create(ctx context.Context, event storage.Event) (int, error) {
+	query := `
+		INSERT INTO events (title, start_date, end_date, description, user_id)
+		VALUES($1, $2, $3, $4, $5)
+		RETURNING id
+	`
+	args := []interface{}{event.Title, event.StartDate, event.EndDate, event.Description, event.UserID}
+
+	var id int
+	err := s.db.QueryRowContext(ctx, query, args...).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("database query failed: %w", err)
+	}
+
+	return id, nil
 }
 
 // Update event.
-func (s *Storage) Update(_ context.Context, id int, change storage.Event) error {
+func (s *Storage) Update(ctx context.Context, id int, change storage.Event) error {
+	query := `
+		UPDATE events
+		SET title = $1,
+			start_date = $2,
+			end_date = $3,
+			description = $4,
+		WHERE id = $5;
+	`
+	args := []interface{}{change.Title, change.StartDate, change.EndDate, change.Description, id}
+
+	result, err := s.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("database query failed: %w", err)
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("database query failed: %w", err)
+	}
+
+	if count == 0 {
+		return storage.ErrEventNotFound
+	}
+
 	return nil
 }
 
 // Delete event.
-func (s *Storage) Delete(_ context.Context, id int) error {
+func (s *Storage) Delete(ctx context.Context, id int) error {
+	query := `
+		DELETE FROM events
+		WHERE event_id = $1
+	`
+	result, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("database query failed: %w", err)
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("database query failed: %w", err)
+	}
+
+	if count == 0 {
+		return storage.ErrEventNotFound
+	}
+
 	return nil
 }
 
@@ -61,7 +116,14 @@ func (s *Storage) ListMonth(_ context.Context, date time.Time) ([]storage.Event,
 }
 
 // Clean storage.
-func (s *Storage) Clean(_ context.Context) error {
+func (s *Storage) Clean(ctx context.Context) error {
+	query := `TRUNCATE TABLE event RESTART IDENTITY`
+
+	_, err := s.db.ExecContext(ctx, query)
+	if err != nil {
+		return fmt.Errorf("database query failed: %w", err)
+	}
+
 	return nil
 }
 
