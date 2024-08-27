@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/config"
 )
 
 var ErrUnsupportedLoggingLevel = errors.New("unsupported logging level")
@@ -15,14 +16,14 @@ type Logger struct {
 }
 
 // New logger.
-func New(level string, colors, fullTimestamp bool) (*Logger, error) {
+func New(config *config.LoggerConfig) (*Logger, error) {
 	// Create new logger.
 	logger := logrus.New()
 
 	// Setup text formatter.
 	logger.SetFormatter(&logrus.TextFormatter{
-		DisableColors: colors,
-		FullTimestamp: fullTimestamp,
+		DisableColors: config.Colors,
+		FullTimestamp: config.FullTimestamp,
 	})
 
 	// Set output channel.
@@ -30,7 +31,7 @@ func New(level string, colors, fullTimestamp bool) (*Logger, error) {
 
 	// Set logging level.
 	// Acceptable values: error, warn, info, debug.
-	switch level {
+	switch config.Level {
 	case "info":
 		logger.SetLevel(logrus.InfoLevel)
 	case "warn":

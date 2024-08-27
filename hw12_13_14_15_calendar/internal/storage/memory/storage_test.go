@@ -1,7 +1,6 @@
 package memorystorage
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -69,30 +68,28 @@ func TestStorage(t *testing.T) {
 	// Create new storage.
 	storage := New()
 
-	ctx := context.Background()
-
 	// Test storage.
 	t.Run("test storage", func(t *testing.T) {
 		// Create events.
 		for _, event := range events {
-			_, err := storage.Create(ctx, *event)
+			err := storage.Create(*event)
 			require.Nil(t, err)
 		}
 
 		// List events for day.
-		dayEvents, err := storage.ListDay(ctx, date1, userID)
+		dayEvents, err := storage.ListDay(date1, userID)
 		require.Nil(t, err)
 		require.Equal(t, events[0].Title, dayEvents[0].Title)
 
 		// List events for day.
-		weekEvents, err := storage.ListWeek(ctx, date1, userID)
+		weekEvents, err := storage.ListWeek(date1, userID)
 		require.Nil(t, err)
 		for i, event := range weekEvents {
 			require.Equal(t, events[i].Title, event.Title)
 		}
 
 		// List events for month.
-		monthEvents, err := storage.ListMonth(ctx, date1, userID)
+		monthEvents, err := storage.ListMonth(date1, userID)
 		require.Nil(t, err)
 		for i, event := range monthEvents {
 			require.Equal(t, events[i].Title, event.Title)
@@ -100,19 +97,19 @@ func TestStorage(t *testing.T) {
 
 		// Update event.
 		id := 4
-		err = storage.Update(ctx, id, update)
+		err = storage.Update(id, update)
 		require.Nil(t, err)
 		require.Equal(t, update, storage.events[4])
 
 		// Delete event.
 		id = 1
-		err = storage.Delete(ctx, id)
+		err = storage.Delete(id)
 		require.Nil(t, err)
-		err = storage.Delete(ctx, id)
+		err = storage.Delete(id)
 		require.Equal(t, ErrNotFound, err)
 
 		// Date busy.
-		_, err = storage.Create(ctx, busyPlanning)
+		err = storage.Create(busyPlanning)
 		require.Equal(t, ErrIsBusy, err)
 	})
 }

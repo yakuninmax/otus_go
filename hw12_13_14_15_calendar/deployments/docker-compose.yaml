@@ -1,25 +1,25 @@
-version: "3.9"
-name: calendar
-
 services:
   db:
     image: postgres:16.4
     container_name: calendar-db
-    env_file: .dev.env
+    env_file: .env
     ports:
-      - $POSTGRES_PORT
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 1s
+      retries: 10
 
   db-migrations:
-    image: calendar-migrations:$IMAGE_TAG
-    container_name: calendar-migrations
-    env_file: .dev.env
-    command: 
-      - -path
-      - /migrations
-      - -database
-      - postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$calendar-db:$POSTGRES_PORT/$POSTGRES_DATABASE?sslmode=disable
-      - verbose
-      - up
+    image: calendar-db-migration:develop
+    container_name: calendar-db-migration
+    env_file: .env
+    command: ["-path", "/migrations/", "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@calendar-db:${POSTGRES_PORT}/${POSTGRES_DATABASE}?sslmode=disable", "up"] 
     depends_on: 
-      - db
+      db:
+        condition: service_healthy
+
+networks:
+  calendar:
 

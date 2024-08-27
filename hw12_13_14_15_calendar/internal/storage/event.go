@@ -17,7 +17,8 @@ type Event struct {
 
 // Error definitions.
 var (
-	ErrEventNotFound     = errors.New("event not found")
-	ErrNoScheduledEvents = errors.New("no scheduled events")
-	ErrDateIsBusy        = errors.New("date is busy")
+	ErrEventNotFound      = errors.New("event not found")
+	ErrNoScheduledEvents  = errors.New("no scheduled events")
+	ErrDateIsBusy         = errors.New("date is busy")
+	ErrDBConnectionFailed = errors.New("database connection failed")
 )

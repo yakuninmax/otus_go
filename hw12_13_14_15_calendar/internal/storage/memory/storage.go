@@ -1,12 +1,12 @@
 package memorystorage
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"sync"
 	"time"
 
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/config"
 	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -20,21 +20,25 @@ type Storage struct {
 	mu     sync.RWMutex
 }
 
-// Fake storage connection.
-func (s *Storage) Connect(_ context.Context, _ string) error {
+// Init Storage.
+func New() *Storage {
+	newStorage := Storage{}
+	newStorage.events = make(store)
+	return &newStorage
+}
+
+// Fake connection.
+func (s *Storage) Connect(_ *config.StorageConnection) error {
 	return nil
 }
 
 // Close fake connection.
-func (s *Storage) Close(_ context.Context) {}
+func (s *Storage) Close() error {
+	return nil
+}
 
 // Create event.
-func (s *Storage) Create(ctx context.Context, event storage.Event) (int, error) {
-	// Check if date is busy.
-	if s.isBusy(ctx, event.StartDate, event.EndDate, event.UserID) {
-		return 0, storage.ErrDateIsBusy
-	}
-
+func (s *Storage) Create(event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -47,16 +51,11 @@ func (s *Storage) Create(ctx context.Context, event storage.Event) (int, error) 
 		Description: event.Description,
 		UserID:      event.UserID,
 	}
-	return id, nil
+	return nil
 }
 
 // Update event.
-func (s *Storage) Update(ctx context.Context, id int, change storage.Event) error {
-	// Check if date is busy.
-	if s.isBusy(ctx, change.StartDate, change.EndDate, change.UserID) {
-		return storage.ErrDateIsBusy
-	}
-
+func (s *Storage) Update(id int, change storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -77,7 +76,7 @@ func (s *Storage) Update(ctx context.Context, id int, change storage.Event) erro
 }
 
 // Delete event.
-func (s *Storage) Delete(_ context.Context, id int) error {
+func (s *Storage) Delete(id int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -92,7 +91,7 @@ func (s *Storage) Delete(_ context.Context, id int) error {
 }
 
 // Get events for day.
-func (s *Storage) ListDay(_ context.Context, date time.Time, userID int) ([]storage.Event, error) {
+func (s *Storage) ListDay(date time.Time, userID int) ([]storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -116,7 +115,7 @@ func (s *Storage) ListDay(_ context.Context, date time.Time, userID int) ([]stor
 }
 
 // Get events for week.
-func (s *Storage) ListWeek(_ context.Context, date time.Time, userID int) ([]storage.Event, error) {
+func (s *Storage) ListWeek(date time.Time, userID int) ([]storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -140,7 +139,7 @@ func (s *Storage) ListWeek(_ context.Context, date time.Time, userID int) ([]sto
 }
 
 // Get events for month.
-func (s *Storage) ListMonth(_ context.Context, date time.Time, userID int) ([]storage.Event, error) {
+func (s *Storage) ListMonth(date time.Time, userID int) ([]storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -164,7 +163,7 @@ func (s *Storage) ListMonth(_ context.Context, date time.Time, userID int) ([]st
 }
 
 // Clean storage.
-func (s *Storage) Clean(_ context.Context) error {
+func (s *Storage) Clean() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -180,7 +179,7 @@ func (s *Storage) newID() int {
 }
 
 // Check if time is busy.
-func (s *Storage) isBusy(_ context.Context, startDate, endDate time.Time, userID int) bool {
+func (s *Storage) IsBusy(startDate, endDate time.Time, userID int) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -195,12 +194,12 @@ func (s *Storage) isBusy(_ context.Context, startDate, endDate time.Time, userID
 				endDate.Equal(event.StartDate) || endDate.Equal(event.EndDate) ||
 				(startDate.After(event.StartDate) && startDate.Before(event.EndDate)) ||
 				(endDate.After(event.StartDate) && endDate.Before(event.EndDate)) {
-				return true
+				return true, nil
 			}
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 func sortByDate(result []storage.Event) []storage.Event {
@@ -210,11 +209,4 @@ func sortByDate(result []storage.Event) []storage.Event {
 	})
 
 	return result
-}
-
-// Init storage.
-func New() *Storage {
-	newStorage := Storage{}
-	newStorage.events = make(store)
-	return &newStorage
 }

@@ -31,7 +31,7 @@ func main() {
 	// Print version info.
 	if flag.Arg(0) == "version" {
 		printVersion()
-		return
+		os.Exit(0)
 	}
 
 	// Validate config file path.
@@ -46,15 +46,10 @@ func main() {
 	}
 
 	// Create logger.
-	logger, err := logger.New(config.LoggerConfig.Level, config.LoggerConfig.Colors, config.LoggerConfig.FullTimestamp)
+	logger, err := logger.New(&config.LoggerConfig)
 	if err != nil {
 		log.Fatalf("failed to configure logger: %s", err.Error())
 	}
-
-	// Create context.
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
 
 	// Create storage.
 	var storage app.Storage
@@ -64,31 +59,27 @@ func main() {
 		storage = memorystorage.New()
 	case "sql":
 		storage = sqlstorage.New()
-		// Get connection string.
-		connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			config.StorageConnection.Host,
-			config.StorageConnection.Port,
-			config.StorageConnection.User,
-			config.StorageConnection.Password,
-			config.StorageConnection.Database)
-
-		err := storage.Connect(ctx, connectionString)
-		if err != nil {
-			logger.Error("database connection failed: " + err.Error())
-			cancel()
-			os.Exit(1) //nolint:gocritic
-		}
 	default:
 		logger.Error("unsupported storage type: " + config.Type)
-		cancel()
 		os.Exit(1)
 	}
 
 	// Create calendar app.
 	calendar := app.New(logger, storage)
+	err = calendar.Storage.Connect(&config.StorageConnection)
+	if err != nil {
+		logger.Error("storage connection failed: " + err.Error())
+		os.Exit(1)
+	}
+	defer calendar.StorageClose().Error()
 
 	// Create HTTP server.
 	server := internalhttp.NewServer(logger, calendar)
+
+	// Create context.
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
 
 	go func() {
 		<-ctx.Done()

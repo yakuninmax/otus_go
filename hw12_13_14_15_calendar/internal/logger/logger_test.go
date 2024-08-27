@@ -7,51 +7,72 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/config"
 )
 
 func TestLogger(t *testing.T) {
 	// Test cases.
 	testcases := []struct {
 		Name   string
-		Level  string
+		Config config.LoggerConfig
 		Result string
 		Action func(logger *Logger)
 	}{
 		{
-			Name:   "no message",
-			Level:  "info",
+			Name: "no message",
+			Config: config.LoggerConfig{
+				Level:         "info",
+				Colors:        false,
+				FullTimestamp: false,
+			},
 			Result: "",
 			Action: func(logger *Logger) {
 				logger.Debug("Debug message")
 			},
 		},
 		{
-			Name:   "info message",
-			Level:  "info",
+			Name: "info message",
+			Config: config.LoggerConfig{
+				Level:         "info",
+				Colors:        false,
+				FullTimestamp: false,
+			},
 			Result: "Info message",
 			Action: func(logger *Logger) {
 				logger.Info("Info message")
 			},
 		},
 		{
-			Name:   "warning message",
-			Level:  "warn",
+			Name: "warning message",
+			Config: config.LoggerConfig{
+				Level:         "warn",
+				Colors:        false,
+				FullTimestamp: false,
+			},
 			Result: "Warning message",
 			Action: func(logger *Logger) {
 				logger.Warn("Warning message")
 			},
 		},
 		{
-			Name:   "error message",
-			Level:  "error",
+			Name: "error message",
+			Config: config.LoggerConfig{
+				Level:         "error",
+				Colors:        false,
+				FullTimestamp: false,
+			},
 			Result: "Error message",
 			Action: func(logger *Logger) {
 				logger.Error("Error message")
 			},
 		},
 		{
-			Name:   "debug message",
-			Level:  "debug",
+			Name: "debug message",
+			Config: config.LoggerConfig{
+				Level:         "debug",
+				Colors:        false,
+				FullTimestamp: false,
+			},
 			Result: "Debug message",
 			Action: func(logger *Logger) {
 				logger.Debug("Debug message")
@@ -65,7 +86,7 @@ func TestLogger(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			logger, err := New(testcase.Level, true, true)
+			logger, err := New(&testcase.Config)
 			testcase.Action(logger)
 			require.NoError(t, err)
 			require.NotNil(t, logger)
@@ -86,7 +107,11 @@ func TestLogger(t *testing.T) {
 	})
 
 	t.Run("unsupported logging level", func(t *testing.T) {
-		logger, err := New("trace", true, true)
+		logger, err := New(&config.LoggerConfig{
+			Level:         "unknown",
+			Colors:        false,
+			FullTimestamp: false,
+		})
 		require.Nil(t, logger)
 		require.Error(t, err, ErrUnsupportedLoggingLevel)
 	})

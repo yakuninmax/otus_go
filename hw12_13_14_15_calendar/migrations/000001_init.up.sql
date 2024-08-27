@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS events (
     start_date timestamptz NOT NULL,
     end_date timestamptz NOT NULL,
     description TEXT,
-    user_id int NOT NULL,
+    user_id int NOT NULL
 );
