@@ -3,39 +3,67 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/app"
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/config"
+	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/server/http"
+	storage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/init"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "../../configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
+	// Parse input flags.
 	flag.Parse()
 
+	// Print version info.
 	if flag.Arg(0) == "version" {
 		printVersion()
-		return
+		os.Exit(0)
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	// Read config file.
+	config, err := config.NewConfig(configFile)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	// Create logger.
+	logger, err := logger.New(&config.LoggerConfig)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
-	server := internalhttp.NewServer(logg, calendar)
+	// Create storage.
+	storage, err := storage.New(&config.StorageConfig)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
+	// Connect db.
+	err = storage.Connect(&config.StorageConnection)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer storage.Close()
+
+	// Create calendar app.
+	calendar := app.New(logger, storage)
+
+	// Create HTTP server.
+	server := internalhttp.New(&config.HTTPConfig, logger, calendar)
+
+	// Create context.
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
@@ -47,15 +75,13 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			logger.Error(err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logger.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+	if err := server.Start(ctx, logger); err != nil {
+		log.Fatalln(err.Error()) //nolint:gocritic
 	}
 }

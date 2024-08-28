@@ -1,0 +1,46 @@
+# Log settings.
+log:
+  # Log level.
+  # Acceptable values: error, warn, info, debug.
+  level: debug
+
+  # Log colors.
+  colors: true
+
+  # Log fullTimestamp.
+  fullTimestamp: true
+
+# Storage parameters.
+storage:
+  # Storage type.
+  # Acceptable values: in-memory, sql.
+  type: in-memory
+  
+  # Storage connection parameters.
+  # Ignored, if storage type is in-memory.
+  connection:
+    # Database name.
+    database: calendar
+    
+    # User name.
+    user: calendar
+
+    # User password.
+    password: c@1end@r
+
+    # Database server host.
+    host: db
+
+    # Database server port
+    port: 5432
+
+# HTTP server parameters.
+http:
+  # HTTP server host.
+  host: localhost
+
+  # HTTP server port.
+  port: 8080
+
+  # Log file path.
+  logPath: ./calendar-http.log
