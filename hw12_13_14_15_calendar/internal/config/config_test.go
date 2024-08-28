@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/fs"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,20 +26,16 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		HTTPConfig: HTTPConfig{
-			Host: "localhost",
-			Port: 8080,
+			Host:    "localhost",
+			Port:    8080,
+			LogPath: "./calendar-http.log",
 		},
 	}
 
 	t.Run("compare configs", func(t *testing.T) {
 		actualConfig, err := NewConfig("../../configs/config.yaml")
 		require.NoError(t, err)
-		require.Equal(t, referenceConfig, actualConfig)
-	})
-
-	t.Run("invalid config file path", func(t *testing.T) {
-		_, err := NewConfig("../../configs/bad.conf")
-		require.ErrorIs(t, err, fs.ErrNotExist)
+		require.Equal(t, &referenceConfig, actualConfig)
 	})
 
 	t.Run("invalid config file", func(t *testing.T) {

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,14 +13,13 @@ import (
 	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/config"
 	"github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/sql"
+	storage "github.com/yakuninmax/otus_go/hw12_13_14_15_calendar/internal/storage/init"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "../../configs/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -34,47 +32,36 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Validate config file path.
-	if err := validateConfigPath(configFile); err != nil {
-		log.Fatalf("invalid config file path: %s", err.Error())
-	}
-
 	// Read config file.
 	config, err := config.NewConfig(configFile)
 	if err != nil {
-		log.Fatalf("failed to read config file: %s", err.Error())
+		log.Fatalf(err.Error())
 	}
 
 	// Create logger.
 	logger, err := logger.New(&config.LoggerConfig)
 	if err != nil {
-		log.Fatalf("failed to configure logger: %s", err.Error())
+		log.Fatalln(err.Error())
 	}
 
 	// Create storage.
-	var storage app.Storage
-
-	switch config.Type {
-	case "in-memory":
-		storage = memorystorage.New()
-	case "sql":
-		storage = sqlstorage.New()
-	default:
-		logger.Error("unsupported storage type: " + config.Type)
-		os.Exit(1)
+	storage, err := storage.New(&config.StorageConfig)
+	if err != nil {
+		log.Fatalln(err.Error())
 	}
+
+	// Connect db.
+	err = storage.Connect(&config.StorageConnection)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer storage.Close()
 
 	// Create calendar app.
 	calendar := app.New(logger, storage)
-	err = calendar.Storage.Connect(&config.StorageConnection)
-	if err != nil {
-		logger.Error("storage connection failed: " + err.Error())
-		os.Exit(1)
-	}
-	defer calendar.StorageClose().Error()
 
 	// Create HTTP server.
-	server := internalhttp.NewServer(logger, calendar)
+	server := internalhttp.New(&config.HTTPConfig, logger, calendar)
 
 	// Create context.
 	ctx, cancel := signal.NotifyContext(context.Background(),
@@ -88,26 +75,13 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logger.Error("failed to stop http server: " + err.Error())
+			logger.Error(err.Error())
 		}
 	}()
 
 	logger.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logger.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1)
+	if err := server.Start(ctx, logger); err != nil {
+		log.Fatalln(err.Error()) //nolint:gocritic
 	}
-}
-
-func validateConfigPath(configFilePath string) error {
-	s, err := os.Stat(configFilePath)
-	if err != nil {
-		return err
-	}
-	if s.IsDir() {
-		return fmt.Errorf("'%s' is a directory", configFilePath)
-	}
-	return nil
 }

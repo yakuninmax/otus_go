@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -55,26 +56,37 @@ type HTTPConfig struct {
 
 	// HTTP server port.
 	Port int `yaml:"port"`
+
+	// Log file path.
+	LogPath string `yaml:"logPath"`
 }
 
-func NewConfig(configFile string) (Config, error) {
-	// Create config structure.
-	config := Config{}
+func NewConfig(configFile string) (*Config, error) {
+	// Check parameters.
+	fileInfo, err := os.Stat(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
+	}
+
+	if fileInfo.IsDir() {
+		return nil, fmt.Errorf("'%s' is a directory", configFile)
+	}
 
 	// Open config file.
 	file, err := os.Open(configFile)
 	if err != nil {
-		return config, err
+		return nil, fmt.Errorf("error opening config file: %w", err)
 	}
 	defer file.Close()
 
-	// New YAML decoder.
-	d := yaml.NewDecoder(file)
-
 	// YAML decoding from file.
-	if err := d.Decode(&config); err != nil {
-		return config, err
+	config := Config{}
+
+	decoder := yaml.NewDecoder(file)
+
+	if err := decoder.Decode(&config); err != nil {
+		return nil, err
 	}
 
-	return config, nil
+	return &config, nil
 }

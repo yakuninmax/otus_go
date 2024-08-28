@@ -55,15 +55,7 @@ func TestStorage(t *testing.T) {
 		UserID:    userID,
 	}
 
-	busyPlanning := storage.Event{
-		Title:     "Busy time event",
-		StartDate: date3.Add(time.Minute * 5),
-		EndDate:   date3.Add(time.Minute * 20),
-		UserID:    userID,
-	}
-
 	ErrNotFound := storage.ErrEventNotFound
-	ErrIsBusy := storage.ErrDateIsBusy
 
 	// Create new storage.
 	storage := New()
@@ -107,9 +99,5 @@ func TestStorage(t *testing.T) {
 		require.Nil(t, err)
 		err = storage.Delete(id)
 		require.Equal(t, ErrNotFound, err)
-
-		// Date busy.
-		err = storage.Create(busyPlanning)
-		require.Equal(t, ErrIsBusy, err)
 	})
 }

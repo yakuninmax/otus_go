@@ -36,8 +36,11 @@ storage:
 
 # HTTP server parameters.
 http:
-  # HTTP server host
+  # HTTP server host.
   host: localhost
 
-  # HTTP server port
+  # HTTP server port.
   port: 8080
+
+  # Log file path.
+  logPath: ./calendar-http.log
